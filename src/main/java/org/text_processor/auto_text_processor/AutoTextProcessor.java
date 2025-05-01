@@ -17,9 +17,9 @@ public class AutoTextProcessor extends Application {
     public void start(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(AutoTextProcessor.class.getResource("text-editor.fxml"));
         Parent root = fxmlLoader.load();
-        Scene scene = new Scene(root); // No hardcoded size — uses FXML's preferred size
+        Scene scene = new Scene(root);
 
-        stage.setTitle("Text Processor!");
+        stage.setTitle("Text Processor");
         stage.setScene(scene);
         stage.show();
     }
