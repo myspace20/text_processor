@@ -26,15 +26,17 @@ public class TextProcessor implements FileOperations {
         private static final Logger LOGGER = Logger.getLogger(TextProcessor.class.getName());
 
 
-        public BufferedReader readFile(String filepath) throws FileNotFoundException {
-            try{
-                BufferedReader reader = new BufferedReader(new FileReader(filepath));
-                return  reader;
-
+        public BufferedReader readFile(String filepath) throws IOException {
+            BufferedReader reader = null;
+            try {
+                reader = new BufferedReader(new FileReader(filepath));
+                return reader;
             } catch (IOException e) {
-                throw new RuntimeException(e);
-            }finally {
-
+                throw new FileNotFoundException("Failed to open file");
+            } finally {
+                if (reader != null) {
+                        reader.close();
+                }
             }
 
         }
@@ -64,14 +66,12 @@ public class TextProcessor implements FileOperations {
 
 
         public List<String> findMatchesUsingRegex(String pattern, String text){
-//        System.out.println(pattern);
             List<String> matches = new ArrayList<>();
             Pattern regexPattern = Pattern.compile(pattern);
             Matcher regexMatcher = regexPattern.matcher(text);
 
             while(regexMatcher.find()){
                 String matchedString = regexMatcher.group();
-//           System.out.println("matched " + matchedString);
                 matches.add(matchedString);
             }
 
@@ -109,15 +109,22 @@ public class TextProcessor implements FileOperations {
         }
 
 
-        public void replacePatternsInFile(String pattern, String replacement, String filePath){
-            try (Stream<String> lines = readFile(filePath).lines()) {
+        public void replacePatternsInFile(String pattern, String replacement, String filePath) throws FileNotFoundException {
+            Stream<String> lines = null;
+            try {
+                lines = readFile(filePath).lines();
                 List<String> replaced = lines
-                        .map(line-> line.replaceAll(pattern, replacement))
+                        .map(line -> line.replaceAll(pattern, replacement))
                         .toList();
                 Files.write(Path.of(filePath), replaced);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new FileNotFoundException("Error writing to file");
+            } finally {
+                if (lines != null) {
+                    lines.close();
+                }
             }
+
 
         }
 
