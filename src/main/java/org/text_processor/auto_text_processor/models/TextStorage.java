@@ -2,6 +2,8 @@ package org.text_processor.auto_text_processor.models;
 
 
 
+import org.text_processor.auto_text_processor.exceptions.TextNotFoundException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -14,8 +16,11 @@ public class TextStorage<T> {
         textMap.put(id,text);
     }
 
-    public void removeText(T id)   {
+    public void removeText(T id) throws TextNotFoundException {
         Text<T> text =  getText(id);
+        if(text == null){
+            throw new TextNotFoundException("Text not found");
+        }
         textMap.remove(id);
     }
 
@@ -25,11 +30,9 @@ public class TextStorage<T> {
     }
 
     public void updateText(T id, String field, Object newValue) throws Exception {
-        System.out.println( " id" + id);
         Text<T> currentText = getText(id);
-//        Text<T> currentText1 = textMap.getText(id);
         if (currentText == null) {
-            throw new Exception("Text does not exist");
+            throw new TextNotFoundException("Text does not exist");
         }
         Text<T> updatedText = getText(field, newValue, currentText);
 
