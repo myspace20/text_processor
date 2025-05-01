@@ -3,6 +3,8 @@ package org.text_processor.auto_text_processor.controllers;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.FileChooser;
+import org.text_processor.auto_text_processor.exceptions.InvalidInputException;
+import org.text_processor.auto_text_processor.exceptions.TextNotFoundException;
 import org.text_processor.auto_text_processor.models.Text;
 import org.text_processor.auto_text_processor.models.TextID;
 import org.text_processor.auto_text_processor.models.TextProcessor;
@@ -14,7 +16,6 @@ import java.util.logging.Logger;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -102,47 +103,56 @@ public class EditorController {
 
     @FXML
     private void onSaveToFile() throws Exception {
-        String regex = regexField.getText();
-        String replacementText = replacementField.getText();
-        UserInput.validateInputField(regex, "Regex");
-        UserInput.validateInputField(replacementText, "Replacement text");
-        textProcessor.replacePatternsInFile("\\b\\w{2}\\b", replacementText,text.getPath());
-        showAlert("Done", "File written to successfully");
+        LOGGER.log(Level.INFO,"Started writing to file");
+        try{
+            String regex = regexField.getText();
+            String replacementText = replacementField.getText();
+            UserInput.validateInputField(regex, "Regex");
+            UserInput.validateInputField(replacementText, "Replacement text");
+            textProcessor.replacePatternsInFile(regex, replacementText,text.getPath());
+            LOGGER.log(Level.INFO,"File written to successfully");
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE,e.getMessage());
+        }
+
     }
 
     @FXML
     public void onUpdateText(Text<TextID> textForUpdate) throws Exception {
-        LOGGER.log(Level.INFO, "Updating text for id: {0}, field: {1}", new Object[]{textForUpdate.getTextId(), "body"});
+        LOGGER.log(Level.INFO, "Updating text for id: {0}, field: {1}", new Object[]{textForUpdate.getTextId(),"Body"});
         try {
-            System.out.println("object for update" + textForUpdate);
-            textStorage.updateText(textForUpdate.getTextId(), "body", mainBody); // Ensure mainBody is defined or passed
+            textStorage.updateText(textForUpdate.getTextId(), "body", mainBody);
+            LOGGER.log(Level.INFO, "Updated text for id: {0}, field: {1}", new Object[]{textForUpdate.getTextId(),"Body"});
         } catch (Exception e) {
-            throw new Exception("Text update failed", e);
+            showAlert("Error", e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error occured while updating text body for id: {0}, field: {1}", new Object[]{textForUpdate.getTextId(),"Body"});
         }
     }
 
 
     @FXML
-    private void onAcceptChanges() throws Exception {
-        String updatedText = changedTextArea.getText();
-        UserInput.validateInputField(updatedText, "Updated text");
-        mainTextArea.setText(updatedText);
-        mainBody = updatedText;
-        ArrayList<Text<TextID>> texts = textStorage.getAllTexts();
-        for(Text<TextID> text:texts){
-            System.out.println(text.getTextId());
+    private void onAcceptChanges(){
+        LOGGER.log(Level.INFO,"Started accepting changes to text in storage");
+        try{
+            String updatedText = changedTextArea.getText();
+            UserInput.validateInputField(updatedText, "Updated text");
+            mainTextArea.setText(updatedText);
+            mainBody = updatedText;
+            onUpdateText(text);
+            comparisonSplitPane.setVisible(false);
+            mainTextArea.setVisible(true);
+            LOGGER.log(Level.INFO,"Changes accepted to text in storage successfully");
+        } catch (Exception e) {
+            showAlert("Error", e.getMessage());
+            LOGGER.log(Level.SEVERE,e.getMessage());
         }
-        onUpdateText(text);
-        Text<TextID> updatedTextMap = textStorage.getText(text.id);
-        System.out.println("updated text" + updatedTextMap);
-        comparisonSplitPane.setVisible(false);
-        mainTextArea.setVisible(true);
     }
 
     @FXML
     public void onOpenFile() {
         File file = chooseFile();
         if (file != null) {
+            LOGGER.log(Level.INFO,"Started reading from file: {0}", file.getAbsolutePath());
             try {
                 Text<TextID> newText = createTextFromFile(file);
                 if (!isTextAlreadyStored(newText)) {
@@ -150,8 +160,13 @@ public class EditorController {
                     text = newText;
                 }
                 loadTextToEditor(newText);
+                LOGGER.log(Level.INFO,"File read successfully: {0}", file.getAbsolutePath());
             } catch (IOException e) {
                 showAlert("Error", "Failed to open the file.");
+                LOGGER.log(Level.SEVERE,e.getMessage());
+            }catch (Exception e){
+                showAlert("Error", e.getMessage());
+                LOGGER.log(Level.SEVERE,e.getMessage());
             }
         }
     }
@@ -201,15 +216,19 @@ public class EditorController {
     @FXML
     public void onMatchPattern() {
         try {
+            LOGGER.log(Level.INFO,"Started matching regex pattern");
             String regex = regexField.getText();
-            UserInput.validateInputField(regex, "regex");
-            UserInput.validateInputField(mainBody, "main body");
-            List<String> matches = textProcessor.findMatchesUsingRegex("\\b\\w{2}\\b", mainBody);
+            UserInput.validateInputField(regex, "Regex");
+            UserInput.validateInputField(mainBody, "Main body");
+            List<String> matches = textProcessor.findMatchesUsingRegex(regex, mainBody);
             int count = textProcessor.countPatterOccurences(matches);
             matchedList.getItems().setAll(matches);
-            totalMatches.setText(String.valueOf(count) + " occurences");
+            totalMatches.setText(count + " occurrences");
+            showAlert("Pattern Frequency", "The word appears " + count + " times.");
+            LOGGER.log(Level.INFO,"Regex pattern matching operation ended");
         } catch (Exception e) {
             showAlert("Error", e.getMessage());
+            LOGGER.log(Level.SEVERE,e.getMessage());
         }
     }
 
@@ -217,12 +236,15 @@ public class EditorController {
     public void onFrequencyAnalysis() {
         try {
             String word = wordFrequency.getText();
-            UserInput.validateInputField(word, "word");
-            UserInput.validateInputField(mainBody, "main body");
+            LOGGER.log(Level.INFO,"Word frequency analysis matching operation started for: {0}",word);
+            UserInput.validateInputField(word, "Word");
+            UserInput.validateInputField(mainBody, "Main body");
             long frequency = textProcessor.wordFrequency(mainBody, word);
             showAlert("Word Frequency", "The word appears " + frequency + " times.");
+            LOGGER.log(Level.INFO,"Word frequency analysis matching operation ended for: {0}",word);
         } catch (Exception e) {
             showAlert("Error", e.getMessage());
+            LOGGER.log(Level.SEVERE,e.getMessage());
         }
     }
 
@@ -231,61 +253,79 @@ public class EditorController {
         try {
             String regex = regexField.getText();
             String replacement = replacementField.getText();
-            UserInput.validateInputField(replacement, "replacement");
-            UserInput.validateInputField(regex, "regex");
-            UserInput.validateInputField(mainBody, "main body");
-            changedText = textProcessor.replacePatternsInText("\\b\\w{2}\\b", replacement, mainBody);
+            LOGGER.log(Level.INFO,"Pattern match replacement operation started for: {0}", regex);
+            UserInput.validateInputField(replacement, "Replacement");
+            UserInput.validateInputField(regex, "Regex");
+            UserInput.validateInputField(mainBody, "Main body");
+            changedText = textProcessor.replacePatternsInText(regex, replacement, mainBody);
             text.setBody(changedText);
+            showAlert("Pattern Replacement", "Pattern match replacement completed");
+            LOGGER.log(Level.INFO,"Pattern match replacement operation ended for: {0}", regex);
         } catch (Exception e) {
             showAlert("Error", e.getMessage());
+            LOGGER.log(Level.SEVERE,e.getMessage());
+
         }
     }
 
     @FXML
-    private void onCompareAndReplace() {
-        String originalText = mainTextArea.getText();
-        if (originalText == null || originalText.isEmpty()) {
-            showAlert("Empty text to compare with", "Please load a file and try again");
-            return;
+    private void onCompareAndReplace() throws InvalidInputException {
+        try{
+            LOGGER.log(Level.INFO,"Compare and replace in progress");
+            String originalText = mainTextArea.getText();
+            UserInput.validateInputField(originalText, "Original text");
+            originalTextArea.setText(originalText);
+            changedTextArea.setText(changedText);
+            mainTextArea.setVisible(false);
+            comparisonSplitPane.setVisible(true);
+            backButton.setVisible(true);
+        } catch (Exception e) {
+            showAlert("Error", e.getMessage());
+            LOGGER.log(Level.SEVERE,e.getMessage());
         }
-
-        originalTextArea.setText(originalText);
-        changedTextArea.setText(changedText);
-
-        mainTextArea.setVisible(false);
-        comparisonSplitPane.setVisible(true);
-        backButton.setVisible(true);
     }
 
     @FXML
     public void onSummarize() {
+        UserInput.validateInputField(mainBody, "Original text");
         mainBody = textProcessor.summarizeText(mainBody);
         mainTextArea.setText(mainBody);
     }
 
-    public void onDelete() throws Exception {
-        try{
-            if(text == null){
-                throw new Exception("Text is empty, please add a text file");
-            }
-            textStorage.removeText(text.id);
-            String displayName = new File(text.getPath()).getName();
-            rootItem.getChildren().removeIf(item -> item.getValue().equals(displayName));
-
-            mainTextArea.clear();
-            originalTextArea.clear();
-            changedTextArea.clear();
-
-            matchedList.getItems().clear();
-            totalMatches.setText("0 occurrences");
-
-            comparisonSplitPane.setVisible(false);
-            mainTextArea.setVisible(true);
-            backButton.setVisible(false);
-
+    public void onDelete() {
+        try {
+            validateTextExists();
+            deleteTextFromStorage();
+            updateUIAfterDeletion();
             showAlert("Success", "Text deleted successfully.");
         } catch (Exception e) {
             showAlert("Error", e.getMessage());
         }
     }
+
+    private void validateTextExists() throws TextNotFoundException {
+        if (text == null) {
+            throw new TextNotFoundException("Text is empty, please add a text file");
+        }
+    }
+
+    private void deleteTextFromStorage() {
+        textStorage.removeText(text.id);
+        String displayName = new File(text.getPath()).getName();
+        rootItem.getChildren().removeIf(item -> item.getValue().equals(displayName));
+    }
+
+    private void updateUIAfterDeletion() {
+        mainTextArea.clear();
+        originalTextArea.clear();
+        changedTextArea.clear();
+
+        matchedList.getItems().clear();
+        totalMatches.setText("0 occurrences");
+
+        comparisonSplitPane.setVisible(false);
+        mainTextArea.setVisible(true);
+        backButton.setVisible(false);
+    }
+
 }

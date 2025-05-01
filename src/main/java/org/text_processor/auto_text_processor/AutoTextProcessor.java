@@ -5,12 +5,9 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import org.text_processor.auto_text_processor.models.*;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
+
 
 public class AutoTextProcessor extends Application {
     @Override
