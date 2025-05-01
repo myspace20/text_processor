@@ -309,7 +309,7 @@ public class EditorController {
         }
     }
 
-    private void deleteTextFromStorage() {
+    private void deleteTextFromStorage() throws TextNotFoundException {
         textStorage.removeText(text.id);
         String displayName = new File(text.getPath()).getName();
         rootItem.getChildren().removeIf(item -> item.getValue().equals(displayName));
