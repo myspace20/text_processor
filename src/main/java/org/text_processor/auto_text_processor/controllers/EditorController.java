@@ -110,8 +110,10 @@ public class EditorController {
             UserInput.validateInputField(regex, "Regex");
             UserInput.validateInputField(replacementText, "Replacement text");
             textProcessor.replacePatternsInFile(regex, replacementText,text.getPath());
+            showAlert("Success","File written to successfully");
             LOGGER.log(Level.INFO,"File written to successfully");
         } catch (Exception e) {
+            showAlert("Error", e.getMessage());
             LOGGER.log(Level.SEVERE,e.getMessage());
         }
 
