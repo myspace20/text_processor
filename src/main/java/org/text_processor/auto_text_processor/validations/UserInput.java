@@ -4,7 +4,7 @@ import org.text_processor.auto_text_processor.exceptions.InvalidInputException;
 
 public class UserInput {
 
-    public static void validateInputField(String value, String field) throws Exception {
+    public static void validateInputField(String value, String field) throws InvalidInputException {
         if(isEmptyOrNullString(value)){
             throw new InvalidInputException(field + " must not be empty");
         }
