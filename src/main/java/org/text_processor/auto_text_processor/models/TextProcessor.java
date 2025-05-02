@@ -33,10 +33,6 @@ public class TextProcessor implements FileOperations {
                 return reader;
             } catch (IOException e) {
                 throw new FileNotFoundException("Failed to open file");
-            } finally {
-                if (reader != null) {
-                        reader.close();
-                }
             }
 
         }
@@ -119,10 +115,6 @@ public class TextProcessor implements FileOperations {
                 Files.write(Path.of(filePath), replaced);
             } catch (IOException e) {
                 throw new FileNotFoundException("Error writing to file");
-            } finally {
-                if (lines != null) {
-                    lines.close();
-                }
             }
 
 
