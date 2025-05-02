@@ -7,6 +7,5 @@ import java.io.IOException;
 public interface FileOperations {
     BufferedReader readFile(String file) throws IOException;
     void replacePatternsInFile(String pattern, String replacement, String filePath) throws IOException;
-
 }
 
