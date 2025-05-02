@@ -109,6 +109,9 @@ public class EditorController {
             String replacementText = replacementField.getText();
             UserInput.validateInputField(regex, "Regex");
             UserInput.validateInputField(replacementText, "Replacement text");
+            if(text == null){
+                throw new TextNotFoundException("Text cannot be null");
+            }
             textProcessor.replacePatternsInFile(regex, replacementText,text.getPath());
             showAlert("Success","File written to successfully");
             LOGGER.log(Level.INFO,"File written to successfully");
@@ -289,21 +292,30 @@ public class EditorController {
 
     @FXML
     public void onSummarize() {
-        UserInput.validateInputField(mainBody, "Original text");
-        mainBody = textProcessor.summarizeText(mainBody);
-        mainTextArea.setText(mainBody);
+        try{
+            LOGGER.log(Level.INFO,"Text summarization in progress");
+            UserInput.validateInputField(mainBody, "Original text");
+            mainBody = textProcessor.summarizeText(mainBody);
+            mainTextArea.setText(mainBody);
+            LOGGER.log(Level.INFO,"Text summarization in completed");
+        } catch (InvalidInputException e) {
+            showAlert("Error", e.getMessage());
+            LOGGER.log(Level.SEVERE,e.getMessage());        }
     }
 
     public void onDelete() {
         try {
+            LOGGER.log(Level.INFO,"Text deletion in progress");
             validateTextExists();
             deleteTextFromStorage();
             updateUIAfterDeletion();
             showAlert("Success", "Text deleted successfully.");
+            LOGGER.log(Level.INFO,"Text deletion in completed");
         } catch (Exception e) {
             showAlert("Error", e.getMessage());
-        }
+            LOGGER.log(Level.SEVERE,e.getMessage());        }
     }
+
 
     private void validateTextExists() throws TextNotFoundException {
         if (text == null) {
